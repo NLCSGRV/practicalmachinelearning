@@ -46,7 +46,9 @@ trainData <- read.csv(url(paste(baseUrl,"pml-training.csv")), na.strings=c("NA",
 testData <- read.csv(url(paste(baseUrl,"pml-testing.csv")), na.strings=c("NA","#DIV/0!",""))
 trainData <- trainData[,-c(1:7)]
 testData <- testData[,-c(1:7)]
-
+partitions = createDataPartition(trainData$classe, times=1, p = 7/10)
+trainData = trainData[ partitions[[1]], ]
+validationData= trainData[ -partitions[[1]], ]
 ```
 ## Feature Selection
 The data set has a high number of NAs. The first task was to remove all columns that have greater than 20% missing values (NAs). 
@@ -108,12 +110,12 @@ This shows that the most accurate model was the Random Forest (at an accuracy so
 ```{r cache=TRUE}
 trainResults <- data.frame(
   "DT" <- 
-    c(paste(round(confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
-    paste(round((1-confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), " %"),  
+    c(paste(round(confusionMatrix(predict(decisionTreeModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1]*100, 3), " %"),
+    paste(round((1-confusionMatrix(predict(decisionTreeModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1])*100, 3), " %"),  
     decisionTreeTime$toc - decisionTreeTime$tic),
   "RF" <- 
-    c(paste(round(confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
-    paste(round((1-confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), " %"),  
+    c(paste(round(confusionMatrix(predict(randomForestModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1]*100, 3), " %"),
+    paste(round((1-confusionMatrix(predict(randomForestModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1])*100, 3), " %"),  
     randomForestTime$toc - randomForestTime$tic)
 )
 colnames(trainResults) <- c("Decision Tree","Random Forest")
@@ -138,7 +140,7 @@ Having built the models, the classes of the dependent variable for each observat
  rfPredict
 ```
 
-It is notable that the Decision Tree predicts different classes in three out of twenty cases.
+It is notable that the Decision Tree predicts different classes in three out of twenty cases (15%), which is slightly higher than the expected out-of-sample error rate of 12.33%.
 
 ```{r}
  sum(dtPredict != rfPredict)

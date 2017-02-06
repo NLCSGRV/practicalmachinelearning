@@ -167,7 +167,10 @@ baseUrl &lt;- &quot;https://d396qusza40orc.cloudfront.net/predmachlearn/&quot;
 trainData &lt;- read.csv(url(paste(baseUrl,&quot;pml-training.csv&quot;)), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
 testData &lt;- read.csv(url(paste(baseUrl,&quot;pml-testing.csv&quot;)), na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;,&quot;&quot;))
 trainData &lt;- trainData[,-c(1:7)]
-testData &lt;- testData[,-c(1:7)]</code></pre>
+testData &lt;- testData[,-c(1:7)]
+partitions = createDataPartition(trainData$classe, times=1, p = 7/10)
+trainData = trainData[ partitions[[1]], ]
+validationData= trainData[ -partitions[[1]], ]</code></pre>
 </div>
 <div id="feature-selection" class="section level2">
 <h2>Feature Selection</h2>
@@ -214,20 +217,20 @@ randomForestTime &lt;- toc()</code></pre>
 <p>This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time.</p>
 <pre class="r"><code>trainResults &lt;- data.frame(
   &quot;DT&quot; &lt;- 
-    c(paste(round(confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), &quot; %&quot;),
-    paste(round((1-confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), &quot; %&quot;),  
+    c(paste(round(confusionMatrix(predict(decisionTreeModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1]*100, 3), &quot; %&quot;),
+    paste(round((1-confusionMatrix(predict(decisionTreeModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1])*100, 3), &quot; %&quot;),  
     decisionTreeTime$toc - decisionTreeTime$tic),
   &quot;RF&quot; &lt;- 
-    c(paste(round(confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), &quot; %&quot;),
-    paste(round((1-confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), &quot; %&quot;),  
+    c(paste(round(confusionMatrix(predict(randomForestModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1]*100, 3), &quot; %&quot;),
+    paste(round((1-confusionMatrix(predict(randomForestModel,validationData[,-ncol(validationData)]), validationData$classe)$overall[1])*100, 3), &quot; %&quot;),  
     randomForestTime$toc - randomForestTime$tic)
 )
 colnames(trainResults) &lt;- c(&quot;Decision Tree&quot;,&quot;Random Forest&quot;)
 rownames(trainResults) &lt;- c(&quot;Accuracy&quot;,&quot;Estimated Out of Sample Error&quot;,&quot;Training Time (seconds)&quot;)
 trainResults</code></pre>
 <pre><code>##                               Decision Tree Random Forest
-## Accuracy                          87.677  %        100  %
-## Estimated Out of Sample Error     12.323  %          0  %
+## Accuracy                           87.67  %        100  %
+## Estimated Out of Sample Error      12.33  %          0  %
 ## Training Time (seconds)              61.982      1035.565</code></pre>
 <p>A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree.</p>
 <pre class="r"><code>resamps &lt;- resamples(list(DT = decisionTreeModel,
@@ -247,7 +250,7 @@ bwplot(resamps, layout = c(2, 1))</code></pre>
  rfPredict</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
-<p>It is notable that the Decision Tree predicts different classes in three out of twenty cases.</p>
+<p>It is notable that the Decision Tree predicts different classes in three out of twenty cases (15%), which is slightly higher than the expected out-of-sample error rate of 12.33%.</p>
 <pre class="r"><code> sum(dtPredict != rfPredict)</code></pre>
 <pre><code>## [1] 3</code></pre>
 </div>
