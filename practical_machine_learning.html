@@ -196,21 +196,25 @@ randomForestTime &lt;- toc()</code></pre>
 </div>
 <div id="comparison-of-models" class="section level2">
 <h2>Comparison of Models</h2>
-<p>In order to compare the models, a dataframe containing the estimated sample accuracy and training time was created. This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time.</p>
+<p>In order to compare the models, a dataframe containing the sample accuracy, estimated out-of-sample error and training time was created. As this is a classification task, the estimated OOS error is 1-Accuracy.</p>
+<p>This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time.</p>
 <pre class="r"><code>trainResults &lt;- data.frame(
   &quot;DT&quot; &lt;- 
     c(paste(round(confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), &quot; %&quot;),
-      decisionTreeTime$toc - decisionTreeTime$tic),
+    paste(round((1-confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), &quot; %&quot;),  
+    decisionTreeTime$toc - decisionTreeTime$tic),
   &quot;RF&quot; &lt;- 
     c(paste(round(confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), &quot; %&quot;),
-      randomForestTime$toc - randomForestTime$tic)
+    paste(round((1-confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), &quot; %&quot;),  
+    randomForestTime$toc - randomForestTime$tic)
 )
 colnames(trainResults) &lt;- c(&quot;Decision Tree&quot;,&quot;Random Forest&quot;)
-rownames(trainResults) &lt;- c(&quot;Accuracy&quot;,&quot;Training Time (seconds)&quot;)
+rownames(trainResults) &lt;- c(&quot;Accuracy&quot;,&quot;Estimated Out of Sample Error&quot;,&quot;Training Time (seconds)&quot;)
 trainResults</code></pre>
-<pre><code>##                         Decision Tree Random Forest
-## Accuracy                    87.677  %        100  %
-## Training Time (seconds)        61.982      1035.565</code></pre>
+<pre><code>##                               Decision Tree Random Forest
+## Accuracy                          87.677  %        100  %
+## Estimated Out of Sample Error     12.323  %          0  %
+## Training Time (seconds)              61.982      1035.565</code></pre>
 <p>A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree.</p>
 <pre class="r"><code>resamps &lt;- resamples(list(DT = decisionTreeModel,
                           RF = randomForestModel))

@@ -99,18 +99,22 @@ plot(randomForestModel)
 ```
 
 ##Comparison of Models
-In order to compare the models, a dataframe containing the estimated sample accuracy and training time was created. This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time. 
+In order to compare the models, a dataframe containing the sample accuracy, estimated out-of-sample error and training time was created. As this is a classification task, the estimated OOS error is 1-Accuracy. 
+
+This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time. 
 ```{r cache=TRUE}
 trainResults <- data.frame(
   "DT" <- 
     c(paste(round(confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
-      decisionTreeTime$toc - decisionTreeTime$tic),
+    paste(round((1-confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), " %"),  
+    decisionTreeTime$toc - decisionTreeTime$tic),
   "RF" <- 
     c(paste(round(confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
-      randomForestTime$toc - randomForestTime$tic)
+    paste(round((1-confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1])*100, 3), " %"),  
+    randomForestTime$toc - randomForestTime$tic)
 )
 colnames(trainResults) <- c("Decision Tree","Random Forest")
-rownames(trainResults) <- c("Accuracy","Training Time (seconds)")
+rownames(trainResults) <- c("Accuracy","Estimated Out of Sample Error","Training Time (seconds)")
 trainResults
 ```
 A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree.
