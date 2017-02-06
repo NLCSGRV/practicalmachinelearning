@@ -99,7 +99,7 @@ plot(randomForestModel)
 ```
 
 ##Comparison of Models
-In order to compare the models, a dataframe containing the in-sample accuracy and training time was created. This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time. 
+In order to compare the models, a dataframe containing the estimated sample accuracy and training time was created. This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time. 
 ```{r cache=TRUE}
 trainResults <- data.frame(
   "DT" <- 
