@@ -1,0 +1,141 @@
+---
+title: "Practical Machine Learning Project"
+author: "Noel Cosgrave"
+date: "2/3/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message=FALSE, echo = TRUE)
+options(digits=2)
+```
+
+# Introduction
+The aim of this project is to build a model that can correctly classify 20 unlabelled observations from a personal activity monitoring dataset using models built with 19,622 labelled observations. 
+
+The data for this project come from a study carried out by the [Human Activity Recognition project](http://groupware.les.inf.puc-rio.br/har), which used readings from accelerometers located on the belt, forearm, arm and dumbell for 6 participants in the study. The purpose is to quantify how well they perform on ten repetitions of a biceps curl performed using the dumbell. Each repetition of the movement was labelled as one of five classes:
+
+- performed exactly according to the specification (Class A)
+- throwing the elbows to the front (Class B)
+- lifting the dumbbell only halfway (Class C)
+- lowering the dumbbell only halfway (Class D)
+- throwing the hips to the front (Class E)
+
+# Methodology
+
+## Install and Load Required Packages
+The packages required for this analysis are installed if not already present and then loaded.
+```{r results="hide"}
+required <- c("caret", "rpart", "rpart.plot", "subselect","tictoc", "lattice")
+installed   <- required %in% rownames(installed.packages())
+if (any(!installed)) install.packages(required[!installed])
+lapply(required, library, character.only = TRUE)
+```
+
+## Loading and Tidying the data
+
+The training and test datasets are loaded directly from the URL. Once loaded, the user identifier, timestamp and window columns are removed as these will not be used as predictors.
+
+```{r cache=TRUE}
+set.seed(78941)
+baseUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/"
+trainData <- read.csv(url(paste(baseUrl,"pml-training.csv")), na.strings=c("NA","#DIV/0!",""))
+testData <- read.csv(url(paste(baseUrl,"pml-testing.csv")), na.strings=c("NA","#DIV/0!",""))
+trainData <- trainData[,-c(1:7)]
+testData <- testData[,-c(1:7)]
+
+```
+## Feature Selection
+The data set has a high number of NAs. The first task was to remove all columns that have greater than 20% missing values (NAs). 
+
+```{r cache=TRUE}
+naRatio <- apply(trainData, 2, function(x) sum(is.na(x)))/nrow(trainData)
+trainData <- trainData[!(naRatio > 0.2)]
+testData <- testData[!(naRatio > 0.2)]
+```
+
+Next any columns showing little or no variance were removed, as these contain very little by way of predictive information. If none of the remaining columns show near zero variance, then no attempted was made to subset the data, as subsetting by an empty set returns an empty dataframe.
+
+```{r cache=TRUE}
+nearZeroVarCols <- nearZeroVar(trainData, saveMetrics=TRUE)
+if (length(nearZeroVarCols[nearZeroVarCols$nzv == TRUE]) > 0) {
+  trainData <- trainData[,-nearZeroVarCols$nzv == TRUE]
+  testData <- testData[,-nearZeroVarCols$nzv == TRUE]
+}
+```
+
+As the number of features (53) is still quite high for some algorithms, a Genetic Algorithm was used to select the 30 best features on the models would be built.
+
+```{r cache=TRUE}
+correlationMatrix <- cov(trainData[,-ncol(trainData)],method="pearson")
+gen <- genetic(correlationMatrix,30,30,popsize = 100, nger=10)
+bestCols <- append(gen$bestsets[nrow(gen$bestsets),],53)
+trainData <- trainData[,bestCols]
+testData <- testData[,bestCols]
+```
+
+## Training and Validating Models
+Several models were trained, eaching using k-fold cross validation. The number of folds is set at 10 for each training method. No preprocessing was carried out as none of the algorithms used are sensitive to factor scaling. The tic() and toc() functions are called before and after the train function to record the amount of time it took to train each model. 
+
+```{r cache=TRUE}
+# set the number of folds for k-fold validation
+control <- trainControl(method="cv", number=10)
+```
+
+The first model trained was a Decision Tree.  
+```{r cache=TRUE}
+tic()
+decisionTreeModel <- train(classe~., data=trainData, tuneLength = 50, trControl=control, method="rpart")
+decisionTreeTime <- toc()
+plot(decisionTreeModel)
+```
+
+The second model was built using a Random Forest algorithm. In order to ensure that the training of the model finished executing in a reasonable time, the number of trees was limited to 100. As shown in the plot, the Random Forest achieves the highest level of accuracy with five randomly-selected predictors.
+```{r cache=TRUE}
+tic()
+randomForestModel <- train(classe~., data=trainData, tuneLength = 10, ntree=100, trControl=control, method="rf")
+randomForestTime <- toc()
+plot(randomForestModel)
+```
+
+##Comparison of Models
+In order to compare the models, a dataframe containing the in-sample accuracy and training time was created. This shows that the most accurate model was the Random Forest (at an accuracy so close to 100% it was rounded to that figure) but with a considerably longer training time. The second most accurate was the Decision Tree, which also had the shorter training time. 
+```{r cache=TRUE}
+trainResults <- data.frame(
+  "DT" <- 
+    c(paste(round(confusionMatrix(predict(decisionTreeModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
+      decisionTreeTime$toc - decisionTreeTime$tic),
+  "RF" <- 
+    c(paste(round(confusionMatrix(predict(randomForestModel,trainData[,-ncol(trainData)]), trainData$classe)$overall[1]*100, 3), " %"),
+      randomForestTime$toc - randomForestTime$tic)
+)
+colnames(trainResults) <- c("Decision Tree","Random Forest")
+rownames(trainResults) <- c("Accuracy","Training Time (seconds)")
+trainResults
+```
+A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree.
+```{r}
+resamps <- resamples(list(DT = decisionTreeModel,
+                          RF = randomForestModel))
+bwplot(resamps, layout = c(2, 1))
+```
+
+# Prediction Results
+Having built the models, the classes of the dependent variable for each observation in the test data was predicted, starting with the least accurate classifier, the Decision Tree.
+
+```{r}
+ dtPredict <- predict(decisionTreeModel,testData)
+ dtPredict
+ 
+ rfPredict <- predict(randomForestModel,testData)
+ rfPredict
+```
+
+It is notable that the Decision Tree predicts different classes in three out of twenty cases.
+
+```{r}
+ sum(dtPredict != rfPredict)
+```
+
+# References
+[1] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ???13) . Stuttgart, Germany: ACM SIGCHI, 2013.
