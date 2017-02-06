@@ -184,7 +184,7 @@ if (length(nearZeroVarCols[nearZeroVarCols$nzv == TRUE]) &gt; 0) {
   trainData &lt;- trainData[,-nearZeroVarCols$nzv == TRUE]
   testData &lt;- testData[,-nearZeroVarCols$nzv == TRUE]
 }</code></pre>
-<p>As the number of features (53) is still quite high for some algorithms, a Genetic Algorithm was used to select the 30 best features on the models would be built.</p>
+<p>As the number of features (53) is still quite high for some algorithms, a Genetic Algorithm was used to select the 30 best features on which the models would be built.</p>
 <pre class="r"><code>correlationMatrix &lt;- cov(trainData[,-ncol(trainData)],method=&quot;pearson&quot;)
 gen &lt;- genetic(correlationMatrix,30,30,popsize = 100, nger=10)
 bestCols &lt;- append(gen$bestsets[nrow(gen$bestsets),],53)
@@ -196,7 +196,7 @@ testData &lt;- testData[,bestCols]</code></pre>
 <p>Several models were trained, eaching using k-fold cross validation. The number of folds is set at 10 for each training method. No preprocessing was carried out as none of the algorithms used are sensitive to factor scaling. The tic() and toc() functions are called before and after the train function to record the amount of time it took to train each model.</p>
 <pre class="r"><code># set the number of folds for k-fold validation
 control &lt;- trainControl(method=&quot;cv&quot;, number=10)</code></pre>
-<p>The first model trained was a Decision Tree.</p>
+<p>The first model trained was a Decision Tree. The plot below shows that the optimal setting for the complexity parameter is zero and that accuracy falls sharply for values marginally higher than the optimal.</p>
 <pre class="r"><code>tic()
 decisionTreeModel &lt;- train(classe~., data=trainData, tuneLength = 50, trControl=control, method=&quot;rpart&quot;)
 decisionTreeTime &lt;- toc()</code></pre>
@@ -248,7 +248,7 @@ trainResults</code></pre>
 ## Accuracy                                         65.752  %
 ## Estimated Out of Sample Error                    34.248  %
 ## Training Time (seconds)                              8.753</code></pre>
-<p>A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree.</p>
+<p>A lattice plot was created to visualise the resampling distributions. This shows that not only does the Random Forest have a higher accuracy, it also has a smaller overall range and interquartile range of accuracy than does the Decision Tree. The overall range and interquartile range for Linear Discriminant Analysis are similar to, if a bit larger than, those for the Decision Tree.</p>
 <pre class="r"><code>resamps &lt;- resamples(list(DT = decisionTreeModel,
                           RF = randomForestModel,
                           LDA = ldaModel))
@@ -279,7 +279,7 @@ bwplot(resamps, layout = c(2, 1))</code></pre>
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
-<p>[1] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.</p>
+<p>[1] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ???13) . Stuttgart, Germany: ACM SIGCHI, 2013.</p>
 </div>
 
 
