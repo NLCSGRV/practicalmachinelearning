@@ -258,7 +258,7 @@ bwplot(resamps, layout = c(2, 1))</code></pre>
 </div>
 <div id="prediction-results" class="section level1">
 <h1>Prediction Results</h1>
-<p>Having built the models, the classes of the dependent variable for each observation in the test data was predicted, starting with the least accurate classifier, Linear Discriminant Analsysi.</p>
+<p>Having built the models, the classes of the dependent variable for each observation in the test data was predicted, starting with the least accurate classifier, Linear Discriminant Analsysis.</p>
 <pre class="r"><code> ldaPredict &lt;- predict(ldaModel,testData)
  ldaPredict</code></pre>
 <pre><code>##  [1] B A B C C C D D A A D A E A E A A B B B
@@ -271,7 +271,7 @@ bwplot(resamps, layout = c(2, 1))</code></pre>
  rfPredict</code></pre>
 <pre><code>##  [1] B A B A A E D B A A B C B A E E A B B B
 ## Levels: A B C D E</code></pre>
-<p>It is notable that the Decision Tree predicts different classes in three out of twenty cases (15%), which is slightly higher than the expected out-of-sample error rate of 12.33%. LDA predicts eight out of twenty classes incorrectly (40%)</p>
+<p>It is notable that the Decision Tree predicts different classes in three out of twenty cases (15%), which is slightly higher than the expected out-of-sample error rate of 12.33%. LDA predicts eight out of twenty classes incorrectly (40%), which is considerably higher than the expected OOS error rate.</p>
 <pre class="r"><code> sum(ldaPredict != rfPredict)</code></pre>
 <pre><code>## [1] 8</code></pre>
 <pre class="r"><code> sum(dtPredict != rfPredict)</code></pre>
@@ -279,7 +279,7 @@ bwplot(resamps, layout = c(2, 1))</code></pre>
 </div>
 <div id="references" class="section level1">
 <h1>References</h1>
-<p>[1] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ???13) . Stuttgart, Germany: ACM SIGCHI, 2013.</p>
+<p>[1] Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human ’13) . Stuttgart, Germany: ACM SIGCHI, 2013.</p>
 </div>
 
 

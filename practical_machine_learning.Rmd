@@ -147,7 +147,7 @@ bwplot(resamps, layout = c(2, 1))
 ```
 
 # Prediction Results
-Having built the models, the classes of the dependent variable for each observation in the test data was predicted, starting with the least accurate classifier, Linear Discriminant Analsysi.
+Having built the models, the classes of the dependent variable for each observation in the test data was predicted, starting with the least accurate classifier, Linear Discriminant Analsysis.
 
 ```{r}
  ldaPredict <- predict(ldaModel,testData)
